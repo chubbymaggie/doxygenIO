@@ -11,5 +11,5 @@ To build the project local (working os: Debian 8, jessie):
   inside the build folder: cmake -G "Unix Makefiles" ..
   inside the build folder: make
   get the runnable file: bin/doxygen
-  make install
+  sudo make install
 
