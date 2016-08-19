@@ -1,0 +1,33 @@
+docparser.h
+-- line 187-189: Moved m_children from protected to public.
+-- line 207-218: added a class: class DocSvg
+
+docparser.cpp
+-- line 1815-1821: added DocSvg initializer
+-- line 4723:  par->m_children.append(new DocSvg(this, 1));
+
+docvisitor.h
+-- line 34: class DocSvg; // Siyuan added a forward declaration of DocSvg
+-- line 103: virtual void visit(DocSvg *) = 0; // Siyuan added a virtual visit of DocSvg
+
+htmldocvisitor.h
+-- line 43: void visit(DocSvg *); // added a visit doc svg node function.
+
+htmldocvisitor.cpp
+-- line 19: #include <sstream>
+-- line 169-194: added a function: void HtmlDocVisitor::visit(DocSvg *s)
+
+Added a visit function for svg node in:
+   ./src/rtfdocvisitor.h     line 40
+   ./src/rtfdocvisitor.cpp   line 98-101
+   ./src/printdocvisitor.h   line 40-43
+   ./src/docbookvisitor.h    line 38
+   ./src/docbookvisitor.cpp  line 101-104
+   ./src/xmldocvisitor.h     line 41
+   ./src/xmldocvisitor.cpp   line 101-104
+   ./src/latexdocvisitor.h   line 43
+   ./src/latexdocvisitor.cpp line 90-93
+   ./src/perlmodgen.cpp:523  line 299, 530-532
+   ./src/textdocvisitor.h    line 40
+   ./src/mandocvisitor.h     line 40
+   ./src/mandocvisitor.cpp   line 52-55
