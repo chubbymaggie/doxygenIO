@@ -15,6 +15,8 @@
  *
  */
 
+#include <unistd.h>
+#define GetCurrentDir getcwd
 #include <ctype.h>
 #include <qregexp.h>
 #include "groupdef.h"
@@ -312,6 +314,11 @@ bool GroupDef::insertMember(MemberDef *md,bool docOnly)
   else
   {
     if(md->memberType()==MemberType_Function && !md->isInline()){
+      char cCurrentPath[FILENAME_MAX];
+      GetCurrentDir(cCurrentPath, sizeof(cCurrentPath));
+      cCurrentPath[sizeof(cCurrentPath) - 1] = '\0';
+      std::string currentdir(cCurrentPath);
+      
       //Siyuan
       ofstream functionNameListFile;
       functionNameListFile.open ("functionNameList.txt",ios::out | ios::app);
