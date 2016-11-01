@@ -210,8 +210,8 @@ std::string HtmlDocVisitor::generateIndentTableRow(const char * first_column_txt
 
   std::string id_prefix_string (id_prefix);
   std::string underscore_string ("_");
-  printf("id_prefix_string: %s\n", id_prefix_string.c_str());
-  printf("index_str: %s\n", index_str.c_str());
+  // printf("id_prefix_string: %s\n", id_prefix_string.c_str());
+  // printf("index_str: %s\n", index_str.c_str());
   std::string current_id_string = id_prefix_string + index_str + underscore_string;
 
   // start row
@@ -281,6 +281,9 @@ void HtmlDocVisitor::generateRow(std::vector<std::string> &previous_parameter_na
 				 int& indent, int &index, std::string &previous_id,
 				 const char*parameter_name_cstr, const char*parameter_value_cstr,
 				 const char*ret_parameter_value_cstr, int collapsible){
+  printf("previous_parameter_list size: %d, current parameter name list size: %d\n",
+	 previous_parameter_name_list.size(), parameter_name_list.size());
+  
   int is_shown = 0;
   if(previous_id_stack.size() == 1)
     is_shown = 1;
@@ -298,7 +301,7 @@ void HtmlDocVisitor::generateRow(std::vector<std::string> &previous_parameter_na
     previous_index_stack.push(index);
   }
   else if(previous_parameter_name_list.size() == parameter_name_list.size()){
-    printf("branch 2\n");
+    // printf("branch 2\n");
     index = previous_index_stack.top();
     previous_index_stack.pop();
     index = index + 1;
@@ -308,9 +311,7 @@ void HtmlDocVisitor::generateRow(std::vector<std::string> &previous_parameter_na
     previous_index_stack.push(index);
   }
   else if(previous_parameter_name_list.size() >  parameter_name_list.size()){
-    printf("branch 3\n");
-    printf("previous_parameter_list size: %d, current parameter name list size: %d\n",
-	   previous_parameter_name_list.size(), parameter_name_list.size());
+    // printf("branch 3\n");
     int level_gap = previous_parameter_name_list.size() - parameter_name_list.size();
     printf("level_gap: %d\n", level_gap);
     indent = indent - indent_unit*level_gap;
@@ -359,42 +360,84 @@ void HtmlDocVisitor::processOneline(std::string next_line, std::string line,
   // get parameter name from the line
   std::getline(ss, parameter_full_name, '\t');
   std::getline(retss, ret_parameter_name, '\t');
-  printf("line: %s\n", line.c_str());
-  printf("ret_line: %s\n", ret_line.c_str());
+  printf("Full name: %s\t", parameter_full_name.c_str());
+  /* printf("line: %s\n", line.c_str());
+     printf("ret_line: %s\n", ret_line.c_str()); */
   
-  std::istringstream nss(parameter_full_name);
-  printf("Parameter full name: %s\n", parameter_full_name.c_str());
-  std::getline(nss, parameter_name, '.');
-  trim(parameter_name);
-  std::vector<std::string> parameter_name_list;
-  parameter_name_list.push_back(parameter_name);
-  printf("Parameter name: %s\n", parameter_name.c_str());
-  printf("Variable name: %s\n", parameter_name_to_process);
-  
-  if(strcmp(parameter_name.c_str(), parameter_name_to_process) != 0)
-    return;
-      
   // get parameter value from the line
   std::getline(ss, parameter_value, '\t');
   std::getline(retss, ret_parameter_value, '\t');
+
+  std::istringstream nss(parameter_full_name);
+  // printf("Parameter full name: %s\n", parameter_full_name.c_str());
+  std::vector<std::string> parameter_name_list;
   
-  // split full name into a list names by '.'
-  while(std::getline(nss, parameter_name, '.')){
-    parameter_name_list.push_back(parameter_name);
+  int isFirstSubname = 1;
+  // split full name into a list names by '.', '*', '->'
+  std::istringstream parameter_name_ss, subname_ss;
+  std::string subname, subname2;
+  while(std::getline(nss, parameter_name, '*')){
+    parameter_name_ss.str(parameter_name);
+    while(std::getline(parameter_name_ss, subname, '.')){
+      
+      size_t pos = 0;
+      while ((pos = subname.find("->")) != std::string::npos) {
+	subname2 = subname.substr(0, pos);
+	subname.erase(0, pos + 2);
+	trim(subname2);
+
+	if(isFirstSubname){
+	  isFirstSubname = 0;
+	  printf("first subname: %s\t", subname2.c_str());
+	  printf("to match: %s\n", parameter_name_to_process);
+	  if(strcmp(subname2.c_str(), parameter_name_to_process) != 0)
+	    return;
+	}
+	
+	parameter_name_list.push_back(subname2);
+      }
+
+      if(isFirstSubname){
+	trim(subname);
+	isFirstSubname = 0;
+	printf("first subname: %s\t", subname.c_str());
+	printf("to match: %s\n", parameter_name_to_process);
+	if(strcmp(subname.c_str(), parameter_name_to_process) != 0)
+	  return;
+
+	parameter_name_list.push_back(subname);
+      }
+      
+      
+    }
+    parameter_name_ss.clear();
   }
 
   int collapsible = 0;
   if(!next_line.empty()){
-    printf("next line is not empty!\n");
+    // printf("next line is not empty!\n");
     std::istringstream next_ss(next_line);
     std::string next_parameter_full_name;
     std::vector<std::string> next_parameter_name_list;
     std::getline(next_ss, next_parameter_full_name, ',');
     std::istringstream next_nss(next_parameter_full_name);
-    std::string tmpstring;
-    while(std::getline(next_nss, tmpstring, '.')){
-      trim(tmpstring);
-      next_parameter_name_list.push_back(tmpstring);
+    std::string tmpstring, tmpstring2, tmpstring3;
+    while(std::getline(next_nss, tmpstring, '*')){
+      std::istringstream next_subname_ss(tmpstring);
+
+      while(std::getline(next_subname_ss, tmpstring2, '.')){
+
+	size_t pos = 0;
+	while ((pos = tmpstring2.find("->")) != std::string::npos) {
+	  tmpstring3 = tmpstring2.substr(0, pos);
+	  tmpstring2.erase(0, pos + 2);
+	  trim(tmpstring3);
+	  next_parameter_name_list.push_back(tmpstring3);
+	}
+	
+      }
+
+      next_subname_ss.clear();
     }
     if(next_parameter_name_list.size() > parameter_name_list.size())
       collapsible = 1;
@@ -416,9 +459,8 @@ void HtmlDocVisitor::visit(DocVariableValue *v){
   std::ostringstream stm;
 
   QCString funcname = v->funcname();
-  //if(strcmp(funcname, "av_frame_copy_props") != 0)
-  //  return;
 
+  printf("\n\n\n\nFunction: %s\n", funcname.rawData());
   std::ifstream infile("ioexamples/" + funcname + ".parameter.example.i");
   std::ifstream retinfile("ioexamples/" + funcname + ".parameter.example.o");
 
@@ -441,11 +483,11 @@ void HtmlDocVisitor::visit(DocVariableValue *v){
     std::getline(idline_ss, functionname, '\t');
     std::getline(idline_ss, parametertype, '\t');
     std::getline(idline_ss, parameter_name_inidfile, '\t');
-    printf("parameter name in id file: %s\n", parameter_name_inidfile.c_str());
+    // printf("parameter name in id file: %s\n", parameter_name_inidfile.c_str());
     if(strcmp(parameter_name_inidfile.c_str(),  v->paramname()) == 0
        && strcmp(functionname.c_str(),funcname) == 0){
       previous_id = functionid + "_" + parameterid + "_";
-      printf("parameter id: %s\n", previous_id.c_str());
+      // printf("parameter id: %s\n", previous_id.c_str());
       break;
     }
   }
