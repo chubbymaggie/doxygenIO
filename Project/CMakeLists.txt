@@ -39,6 +39,9 @@ if (use_libclang)
         find_package(LibClang REQUIRED)
 endif()
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
+
 if (${CMAKE_SYSTEM} MATCHES "Darwin")
     set(CMAKE_CXX_FLAGS "-Wno-deprecated-register -mmacosx-version-min=10.5 ${CMAKE_CXX_FLAGS}")
     set(CMAKE_C_FLAGS "-Wno-deprecated-register -mmacosx-version-min=10.5 ${CMAKE_C_FLAGS}")
