@@ -31,8 +31,9 @@ const int DocVisitor_Docbook = 7;
 
 // forward declarations
 class DocWord;
-class DocSvg; // Siyuan added a forward declaration of DocSvg
-class DocVariableValue; // Siyuan added a forward declaration of DocVariableValue
+class DocSvg; // Docio: Added a forward declaration of DocSvg
+class DocVariableValue; // Docio: added a forward declaration of DocVariableValue
+class DocIoexample; // Docio: added a declaration for io example
 class DocWhiteSpace;
 class DocAutoList;
 class DocAutoListItem;
@@ -103,8 +104,9 @@ class DocVisitor
      *  @{
      */
     virtual void visit(DocWord *) = 0;
-    virtual void visit(DocSvg *) = 0; // Siyuan added a virtual visit of DocSvg
-    virtual void visit(DocVariableValue *) = 0; // Siyuan added a virtual visit of DocVariableValue
+    virtual void visit(DocSvg *) = 0; // Docio: added a virtual visit of DocSvg
+    virtual void visit(DocVariableValue *) = 0; // Docio: added a virtual visit of DocVariableValue
+    virtual void visit(DocIoexample *) = 0; // Docio: added a virtual visit of DocIoexample
     virtual void visit(DocWhiteSpace *) = 0;
     virtual void visit(DocSymbol *) = 0;
     virtual void visit(DocURL *) = 0;

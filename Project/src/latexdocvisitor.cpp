@@ -187,16 +187,6 @@ void LatexDocVisitor::visit(DocWord *w)
   filter(w->word());
 }
 
-// Siyuan added a visit doc svg node function
-void LatexDocVisitor::visit(DocSvg *w)
-{
-}
-
-// Siyuan added a visit doc variable value node function
-void LatexDocVisitor::visit(DocVariableValue *w)
-{
-}
-
 void LatexDocVisitor::visit(DocLinkedWord *w)
 {
   if (m_hide) return;

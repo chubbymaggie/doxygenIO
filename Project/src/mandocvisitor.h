@@ -37,8 +37,9 @@ class ManDocVisitor : public DocVisitor
     //--------------------------------------
     
     void visit(DocWord *);
-    void visit(DocSvg *); //Siyuan
-    void visit(DocVariableValue *); //Siyuan
+    void visit(DocSvg *){} // Docio
+    void visit(DocVariableValue *){} // Docio
+    void visit(DocIoexample *){} // Docio
     void visit(DocLinkedWord *);
     void visit(DocWhiteSpace *);
     void visit(DocSymbol *);

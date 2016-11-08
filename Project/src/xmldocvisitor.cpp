@@ -98,16 +98,6 @@ void XmlDocVisitor::visit(DocWord *w)
   filter(w->word());
 }
 
-// Siyuan added a visit doc svg node function
-void XmlDocVisitor::visit(DocSvg *w)
-{
-}
-
-// Siyuan added a visit doc variable value node function
-void XmlDocVisitor::visit(DocVariableValue *w)
-{
-}
-
 void XmlDocVisitor::visit(DocLinkedWord *w)
 {
   if (m_hide) return;

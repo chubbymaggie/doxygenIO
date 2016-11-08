@@ -2965,8 +2965,20 @@ void MemberDef::writeDocumentation(MemberList *ml,OutputList &ol,
         TRUE,         // indexWords
         FALSE         // isExample
         );
-
   }
+
+  // generate the i/o example document
+  QCString ioDocs;
+  ioDocs += "@ioexample"; // add the command in ioDocs
+  ol.generateDoc(
+	 docFile(), docLine(),
+	 getOuterScope()?getOuterScope():container,
+	 this, // memberDef
+	 ioDocs, // ioFileName
+	 TRUE, // indexWords
+	 FALSE // isExample
+	 );
+
 
   _writeEnumValues(ol,container,cfname,ciname,cname);
   _writeReimplements(ol);
@@ -3018,6 +3030,7 @@ void MemberDef::writeDocumentation(MemberList *ml,OutputList &ol,
           qPrint(qualifiedName()));
     }
   }
+  
 }
 
 // strip scope and field name from the type

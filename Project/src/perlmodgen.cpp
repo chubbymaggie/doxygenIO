@@ -296,8 +296,9 @@ public:
   //--------------------------------------
    
   void visit(DocWord *);
-  void visit(DocSvg *); // Siyuan added a visit doc svg node function
-  void visit(DocVariableValue *); // Siyuan added a visit doc variable value node function
+  void visit(DocSvg *){} // Docio: added a visit doc svg node function
+  void visit(DocVariableValue *){} // Docio: added a visit doc variable value node function
+  void visit(DocIoexample *){} // Docio: added a visit doc variable value node function
   void visit(DocLinkedWord *);
   void visit(DocWhiteSpace *);
   void visit(DocSymbol *);
@@ -526,14 +527,6 @@ void PerlModDocVisitor::visit(DocWord *w)
 {
   enterText();
   m_output.addQuoted(w->word());
-}
-
-void PerlModDocVisitor::visit(DocSvg *w) // Siyuan added a visit doc svg node function
-{
-}
-
-void PerlModDocVisitor::visit(DocVariableValue *w) // Siyuan added a visit doc variable value node function
-{
 }
 
 void PerlModDocVisitor::visit(DocLinkedWord *w)

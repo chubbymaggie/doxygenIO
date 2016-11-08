@@ -144,6 +144,7 @@ CommandMap cmdMap[] =
   { "--",            CMD_NDASH },
   { "---",           CMD_MDASH },
   { "_setscope",     CMD_SETSCOPE },
+  { "ioexample", CMD_IOEXAMPLE }, // command that tell doxygen to generate io example
   { 0,               0 },
 };
 

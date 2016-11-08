@@ -40,8 +40,9 @@ class LatexDocVisitor : public DocVisitor
     //--------------------------------------
     
     void visit(DocWord *);
-    void visit(DocSvg *); // Siyuan added a visit doc svg node function
-    void visit(DocVariableValue *); // Siyuan added a visit doc variable value node function
+    void visit(DocSvg *){} // Docio: added a visit doc svg node function
+    void visit(DocVariableValue *){} // Docio: added a visit doc variable value node function
+    void visit(DocIoexample *){} // Docio: added a visit doc io example
     void visit(DocLinkedWord *);
     void visit(DocWhiteSpace *);
     void visit(DocSymbol *);

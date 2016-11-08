@@ -23,7 +23,7 @@
 
 struct CommandMap;
 
-const int SIMPLESECT_BIT = 0x1000;
+const int SIMPLESECT_BIT = 0x1000; // 4096
 
 enum CommandType
 {
@@ -133,7 +133,8 @@ enum CommandType
   CMD_SETSCOPE     = 103,
   CMD_PUNT         = 104,
   CMD_PLUS         = 105,
-  CMD_MINUS        = 106
+  CMD_MINUS        = 106,
+  CMD_IOEXAMPLE    = 107
 };
 
 enum HtmlTagType

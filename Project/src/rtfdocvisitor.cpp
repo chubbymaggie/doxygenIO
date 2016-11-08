@@ -95,16 +95,6 @@ void RTFDocVisitor::visit(DocWord *w)
   m_lastIsPara=FALSE;
 }
 
-// Siyuan added a visit doc svg node function
-void RTFDocVisitor::visit(DocSvg *w)
-{
-}
-
-// Siyuan added a visit doc variable value node function
-void RTFDocVisitor::visit(DocVariableValue *w)
-{
-}
-
 void RTFDocVisitor::visit(DocLinkedWord *w)
 {
   if (m_hide) return;

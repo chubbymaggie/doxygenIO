@@ -132,7 +132,8 @@ class DocNode
                 Kind_HtmlBlockQuote = 49,
                 Kind_VhdlFlow       = 50,
                 Kind_ParBlock       = 51,
-                Kind_DiaFile        = 52
+                Kind_DiaFile        = 52,
+		Kind_Ioexample      = 53
               };
     /*! Creates a new node */
     DocNode() : m_parent(0), m_insidePre(FALSE) {}
@@ -204,12 +205,13 @@ class DocWord : public DocNode
     QCString  m_word;
 };
 
-/** Siyuan: Node representing a svg                                                                                                          
+/** Node representing a svg
  */
 class DocSvg : public DocNode
 {
  public:
-  DocSvg(DocNode *parent,int rectWidth);
+  DocSvg(DocNode *parent,int rectWidth) :
+    m_rectWidth(rectWidth) { m_parent = parent; }
   int rectWidth() { return m_rectWidth; }
   void accept(DocVisitor *v) { v->visit(this); }
   Kind kind() const { return Kind_Word; }
@@ -217,12 +219,14 @@ class DocSvg : public DocNode
   int m_rectWidth;
 };
 
-/** Siyuan: Node representing a variable value
+/** Node representing a variable value
  */
 class DocVariableValue : public DocNode
 {
  public:
-  DocVariableValue(DocNode *parent,const QCString &funcname,const QCString &paramname, const QCString &value);
+  DocVariableValue(DocNode *parent,const QCString &funcname,const QCString &paramname, const QCString &value) :
+    m_value(value), m_funcname(funcname), m_paramname(paramname)
+    { m_parent = parent; }
   QCString value() const {return m_value;}
   QCString funcname() const {return m_funcname;}
   QCString paramname() const {return m_paramname;}
@@ -234,6 +238,21 @@ class DocVariableValue : public DocNode
   QCString m_funcname;
   QCString m_paramname;
 };
+
+/** Node representing an io example section */
+class DocIoexample : public DocNode
+{
+  public:
+   DocIoexample(DocNode *parent,const QCString &funcname)
+     { m_parent = parent; m_funcname = funcname; }
+   QCString funcname() const { return m_funcname; }
+   Kind kind() const          { return Kind_Ioexample; }
+   void accept(DocVisitor *v) { v->visit(this); }
+
+  private:
+    QCString m_funcname;
+};
+
 
 /** Node representing a word that can be linked to something
  */
@@ -1159,6 +1178,7 @@ class DocPara : public CompAccept<DocPara>, public DocNode
     int handleHtmlStartTag(const QCString &tagName,const HtmlAttribList &tagHtmlAttribs);
     int handleHtmlEndTag(const QCString &tagName);
     int handleSimpleSection(DocSimpleSect::Type t,bool xmlContext=FALSE);
+    int handleIoexample(const QCString &cmdName);
     int handleXRefItem();
     int handleParamSection(const QCString &cmdName,DocParamSect::Type t,
                            bool xmlContext,

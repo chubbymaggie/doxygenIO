@@ -49,16 +49,6 @@ void ManDocVisitor::visit(DocWord *w)
   m_firstCol=FALSE;
 }
 
-// Siyuan added a visit doc svg node function
-void ManDocVisitor::visit(DocSvg *w)
-{
-}
-
-// Siyuan added a visit doc variable value node function
-void ManDocVisitor::visit(DocVariableValue *w)
-{
-}
-
 void ManDocVisitor::visit(DocLinkedWord *w)
 {
   if (m_hide) return;

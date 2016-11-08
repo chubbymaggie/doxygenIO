@@ -37,8 +37,9 @@ class TextDocVisitor : public DocVisitor
     //--------------------------------------
     
     void visit(DocWord *w)        { filter(w->word()); }
-    void visit(DocSvg *w)         {} // Siyuan added a visit doc svg node function
-    void visit(DocVariableValue *w)         {} // Siyuan added a visit doc variable value node function
+    void visit(DocSvg *w)         {} // Docio: added a visit doc svg node function
+    void visit(DocVariableValue *w)     {} // Docio: added a visit doc variable value node function
+    void visit(DocIoexample *w)         {} // Docio: added a visit doc variable value node function
     void visit(DocLinkedWord *w)  { filter(w->word()); }
     void visit(DocWhiteSpace *)   { m_t << " ";       }
     void visit(DocSymbol *);

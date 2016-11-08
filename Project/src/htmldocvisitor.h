@@ -43,8 +43,9 @@ class HtmlDocVisitor : public DocVisitor
     //--------------------------------------
     
     void visit(DocWord *);
-    void visit(DocSvg *); // added a visit doc svg node function.
-    void visit(DocVariableValue *); // added a visit doc variable value node function.
+    void visit(DocSvg *); // Docio: added a visit doc svg node function.
+    void visit(DocVariableValue *); // Docio: added a visit doc variable value node function.
+    void visit(DocIoexample *); // Docio: added a visit doc io example.
     void visit(DocLinkedWord *);
     void visit(DocWhiteSpace *);
     void visit(DocSymbol *);
@@ -166,7 +167,7 @@ class HtmlDocVisitor : public DocVisitor
     void forceEndParagraph(DocNode *n);
     void forceStartParagraph(DocNode *n);
 
-    // Siyuan
+    // Docio
     std::string generateIndentTableRow(const char * first_column_txt, const char * second_column_txt,
 				       const char *third_column_txt,
 				       std::string id_prefix, int indent,int index, int display, int collapsible);
@@ -183,6 +184,10 @@ class HtmlDocVisitor : public DocVisitor
 			std::stack<std::string> &previous_id_stack,
 			std::stack<int> &previous_index_stack,
 			std::vector<std::string> &previous_parameter_name_list);
+    void getParameterId(std::ifstream &parameterIdsFile, std::string &previous_id,
+			 QCString paramName, QCString funcname);
+    void getFunctionId(std::ifstream &parameterIdsFile, std::string &previous_id,
+			QCString funcname);
     //--------------------------------------
     // state variables
     //--------------------------------------

@@ -37,12 +37,16 @@ class PrintDocVisitor : public DocVisitor
       indent_leaf();
       printf("%s",w->word().data());
     }
-    //Siyuan added a visit doc svg node function
+    // Docio added a visit doc svg node function
     void visit(DocSvg *w)
     {
     }
-    //Siyuan added a visit doc variable value node function
+    // Docio added a visit doc variable value node function
     void visit(DocVariableValue *w)
+    {
+    }
+    // Docio added a visit doc io example
+    void visit(DocIoexample *w)
     {
     }
     void visit(DocLinkedWord *w)

@@ -386,7 +386,7 @@ void HtmlDocVisitor::processOneline(std::string next_line, std::string line,
 	subname.erase(0, pos + 2);
 	trim(subname2);
 
-	if(isFirstSubname){
+	if(isFirstSubname && parameter_name_to_process){
 	  isFirstSubname = 0;
 	  printf("first subname: %s\t", subname2.c_str());
 	  printf("to match: %s\n", parameter_name_to_process);
@@ -397,7 +397,7 @@ void HtmlDocVisitor::processOneline(std::string next_line, std::string line,
 	parameter_name_list.push_back(subname2);
       }
 
-      if(isFirstSubname){
+      if(isFirstSubname && parameter_name_to_process){
 	trim(subname);
 	isFirstSubname = 0;
 	printf("first subname: %s\t", subname.c_str());
@@ -452,29 +452,9 @@ void HtmlDocVisitor::processOneline(std::string next_line, std::string line,
   previous_parameter_name_list = parameter_name_list;
 }
 
-// Siyuan: added a function for visiting value node
-void HtmlDocVisitor::visit(DocVariableValue *v){
-  
-  if (m_hide) return;
-  std::ostringstream stm;
-
-  QCString funcname = v->funcname();
-
-  printf("\n\n\n\nFunction: %s\n", funcname.rawData());
-  std::ifstream infile("ioexamples/" + funcname + ".parameter.example.i");
-  std::ifstream retinfile("ioexamples/" + funcname + ".parameter.example.o");
-
-  if ( infile.peek() == std::ifstream::traits_type::eof() &&  retinfile.peek() == std::ifstream::traits_type::eof()) {
-    return;
-  }
-  
-  int indent = 0;
-  int index = 0;
-  
-  std::string previous_id = to_string(1) + "_";
+void HtmlDocVisitor::getParameterId(std::ifstream &parameterIdsFile, std::string &previous_id,
+				    QCString paramName, QCString funcname){
   std::string id_line;
-  // get the parameter's id
-  std::ifstream parameterIdsFile("parameterids.txt");
   while(std::getline(parameterIdsFile, id_line)){
     std::string functionid, parameterid, functionname, parametertype, parameter_name_inidfile;
     std::istringstream idline_ss(id_line);
@@ -483,14 +463,58 @@ void HtmlDocVisitor::visit(DocVariableValue *v){
     std::getline(idline_ss, functionname, '\t');
     std::getline(idline_ss, parametertype, '\t');
     std::getline(idline_ss, parameter_name_inidfile, '\t');
-    // printf("parameter name in id file: %s\n", parameter_name_inidfile.c_str());
-    if(strcmp(parameter_name_inidfile.c_str(),  v->paramname()) == 0
-       && strcmp(functionname.c_str(),funcname) == 0){
+    if(strcmp(parameter_name_inidfile.c_str(),  paramName) == 0
+       && strcmp(functionname.c_str(), funcname) == 0){
       previous_id = functionid + "_" + parameterid + "_";
-      // printf("parameter id: %s\n", previous_id.c_str());
       break;
     }
   }
+  return;
+}
+
+void HtmlDocVisitor::getFunctionId(std::ifstream &parameterIdsFile, std::string &previous_id,
+				   QCString funcname){
+  std::string id_line;
+  while(std::getline(parameterIdsFile, id_line)){
+    std::string functionid, parameterid, functionname, parametertype, parameter_name_inidfile;
+    std::istringstream idline_ss(id_line);
+    std::getline(idline_ss, functionid, '\t');
+    std::getline(idline_ss, parameterid, '\t');
+    std::getline(idline_ss, functionname, '\t');
+    std::getline(idline_ss, parametertype, '\t');
+    std::getline(idline_ss, parameter_name_inidfile, '\t');
+    if(strcmp(functionname.c_str(), funcname) == 0){
+      previous_id = functionid + "_";
+      break;
+    }
+  }
+}
+
+// Docio: added a function for visiting value node
+void HtmlDocVisitor::visit(DocVariableValue *v){
+  
+  if (m_hide) return;
+
+  QCString funcname = v->funcname();
+  std::ifstream infile("ioexamples/" + funcname + ".parameter.example.i");
+  std::ifstream retinfile("ioexamples/" + funcname + ".parameter.example.o");
+  std::ifstream parameterIdsFile("parameterids.txt");
+
+  if ( infile.peek() == std::ifstream::traits_type::eof()
+       && retinfile.peek() == std::ifstream::traits_type::eof()) {
+    return;
+  }
+
+  if ( parameterIdsFile.peek() == std::ifstream::traits_type::eof() ){
+    return;
+  }
+  
+  int indent = 0;
+  int index = 0;
+  
+  // get the parameter's id
+  std::string previous_id = to_string(1) + "_";
+  HtmlDocVisitor::getParameterId(parameterIdsFile, previous_id, v->paramname(), funcname);
 
   std::stack<std::string> previous_id_stack;
   std::stack<int> previous_index_stack;
@@ -534,6 +558,66 @@ void HtmlDocVisitor::visit(DocVariableValue *v){
 		 previous_parameter_name_list);
   
   m_t << "</tbody></table>";
+}
+
+void HtmlDocVisitor::visit(DocIoexample *io){
+  if (m_hide) return;
+  QCString funcname = io->funcname();
+  std::ifstream infile("ioexamples/" + funcname + ".parameter.example.i");
+  std::ifstream retinfile("ioexamples/" + funcname + ".parameter.example.o");
+  std::ifstream parameterIdsFile("parameterids.txt");
+  if ( infile.peek() == std::ifstream::traits_type::eof()
+       && retinfile.peek() == std::ifstream::traits_type::eof()
+       && parameterIdsFile.peek() == std::ifstream::traits_type::eof()) {
+    return;
+  }
+  
+  forceEndParagraph(io);
+  m_t << "<dl class=\"section ioexample\"><dt>I/O Example</dt><dd>";
+
+  // Table of values of parameters and return
+  m_t << "<table class=\"ioexample\"><tbody>";
+  // headline
+  m_t << "<tr><th>parameter name</th><th>before function call</th><th>after function call</th></tr>";
+
+  // get the parameter's id
+  std::string previous_id = to_string(1) + "_";  
+  getFunctionId(parameterIdsFile, previous_id, funcname);
+
+  std::stack<std::string> previous_id_stack;
+  std::stack<int> previous_index_stack;
+  std::vector<std::string> previous_parameter_name_list;
+  std::string line, next_line, ret_line;
+  int indent = 0, index = 0;
+
+  previous_id_stack.push(previous_id);
+  previous_index_stack.push(-1);
+  
+  std::getline(infile, line); 
+  while (std::getline(infile, next_line)){
+    std::getline(retinfile, ret_line);
+    processOneline(next_line, line, ret_line, NULL,
+		   indent, index,
+		   previous_id,
+		   previous_id_stack,
+		   previous_index_stack,
+		   previous_parameter_name_list);
+
+    line = next_line; // update the current line
+  }//finish read file line by line
+  
+  // process the last line
+  std::getline(retinfile, ret_line);
+  next_line.clear();
+  processOneline(next_line, line, ret_line, NULL,
+		 indent, index,
+		 previous_id,
+		 previous_id_stack,
+		 previous_index_stack,
+		 previous_parameter_name_list);
+  
+  m_t << "</tbody></table></dd></dl>";
+  return;
 }
 
 void HtmlDocVisitor::visit(DocLinkedWord *w)

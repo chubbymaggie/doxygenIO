@@ -1813,22 +1813,6 @@ DocWord::DocWord(DocNode *parent,const QCString &word) :
 }
 
 //---------------------------------------------------------------------------
-// Siyuan added DocSvg::DocSvg
-DocSvg::DocSvg(DocNode *parent,int width) :
-  m_rectWidth(width)
-{
-  m_parent = parent;
-}
-
-//---------------------------------------------------------------------------
-// Siyuan added DocVariableValue::DocVariableValue
-DocVariableValue::DocVariableValue(DocNode *parent,const QCString &funcname,const QCString &paramname, const QCString &value) :
-  m_value(value), m_funcname(funcname), m_paramname(paramname)
-{
-  m_parent = parent;
-}
-
-//---------------------------------------------------------------------------
 
 DocLinkedWord::DocLinkedWord(DocNode *parent,const QCString &word,
                   const QCString &ref,const QCString &file,
@@ -5775,6 +5759,12 @@ int DocPara::handleCommand(const QCString &cmdName)
     case CMD_INHERITDOC:
       handleInheritDoc();
       break;
+    case CMD_IOEXAMPLE:
+      {
+	DocIoexample *io=new DocIoexample(this, g_memberDef->name());
+	m_children.append(io);
+	break;
+      }
     default:
       // we should not get here!
       ASSERT(0);
