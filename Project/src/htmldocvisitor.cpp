@@ -576,7 +576,7 @@ void HtmlDocVisitor::visit(DocIoexample *io){
   m_t << "<dl class=\"section ioexample\"><dt>I/O Example</dt><dd>";
 
   // Table of values of parameters and return
-  m_t << "<table class=\"ioexample\"><tbody>";
+  m_t << "<table class=\"fieldtable\"><tbody>";
   // headline
   m_t << "<tr><th>parameter name</th><th>before function call</th><th>after function call</th></tr>";
 
