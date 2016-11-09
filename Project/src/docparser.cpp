@@ -4717,8 +4717,8 @@ int DocParamList::parse(const QCString &cmdName)
   par = new DocPara(this);
   m_paragraphs.append(par);
   retval = par->parse();
-  /*Siyuan: this is the place we read the Funcwatch results and put the results in the document.*/
-  if(!g_memberDef){
+  /* old implemenation: Docio: this is the place we read the Funcwatch results and put the results in the document.*/
+  /* if(!g_memberDef){
     warn_doc_error(g_fileName,doctokenizerYYlineno,"cannot find function name for %s", qPrint(g_token->name));
   }
   else{
@@ -4727,7 +4727,8 @@ int DocParamList::parse(const QCString &cmdName)
 						parameter_name,
 						"value..."
 						));
-  }
+						}*/
+  /* Docio: end */
   // par->m_children.append(new DocSvg(this, 40));
   par->markFirst();
   par->markLast();
