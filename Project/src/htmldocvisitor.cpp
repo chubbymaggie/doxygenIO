@@ -225,7 +225,7 @@ std::string HtmlDocVisitor::generateIndentTableRow(const char * first_column_txt
   // first column -- indention
   m_t << "<span style=\"width:" << indent_pchar << "px;display:inline-block;\">&nbsp;</span>";
   if(collapsible){
-    printf("current_id_string: %s\n", current_id_string.c_str());
+    // printf("current_id_string: %s\n", current_id_string.c_str());
     // first column -- arrow
     m_t << "<span id=\"arr_" << current_id_string.c_str() <<  "\" class=\"arrow\" onclick=\"toggleFolder('"
 	<< current_id_string.c_str() << "')\">&#9658;</span>";
@@ -281,8 +281,8 @@ void HtmlDocVisitor::generateRow(std::vector<std::string> &previous_parameter_na
 				 int& indent, int &index, std::string &previous_id,
 				 const char*parameter_name_cstr, const char*parameter_value_cstr,
 				 const char*ret_parameter_value_cstr, int collapsible){
-  printf("previous_parameter_list size: %d, current parameter name list size: %d\n",
-	 previous_parameter_name_list.size(), parameter_name_list.size());
+  /* printf("previous_parameter_list size: %d, current parameter name list size: %d\n",
+     previous_parameter_name_list.size(), parameter_name_list.size()); */
   
   int is_shown = 0;
   if(previous_id_stack.size() == 1)
@@ -291,7 +291,7 @@ void HtmlDocVisitor::generateRow(std::vector<std::string> &previous_parameter_na
   int indent_unit = 16;
   
   if(previous_parameter_name_list.size() == 0){
-    printf("branch 1\n");
+    // printf("branch 1\n");
     indent = 0;
     index =previous_index_stack.top();
     previous_index_stack.pop();
@@ -313,14 +313,14 @@ void HtmlDocVisitor::generateRow(std::vector<std::string> &previous_parameter_na
   else if(previous_parameter_name_list.size() >  parameter_name_list.size()){
     // printf("branch 3\n");
     int level_gap = previous_parameter_name_list.size() - parameter_name_list.size();
-    printf("level_gap: %d\n", level_gap);
+    // printf("level_gap: %d\n", level_gap);
     indent = indent - indent_unit*level_gap;
-    printf("new indent: %d\n", indent);
+    // printf("new indent: %d\n", indent);
     index = previous_index_stack.top();
-    printf("current index: %d\n", index);
+    // printf("current index: %d\n", index);
     previous_index_stack.pop();
     for(int i = 0; i < level_gap; i++){
-      printf("loop i=%d\n", i);
+      // printf("loop i=%d\n", i);
       index = previous_index_stack.top();
       previous_index_stack.pop();
       previous_id_stack.pop();
@@ -333,7 +333,7 @@ void HtmlDocVisitor::generateRow(std::vector<std::string> &previous_parameter_na
     previous_index_stack.push(index);
   }
   else if(previous_parameter_name_list.size() <  parameter_name_list.size()){
-    printf("branch 4\n");
+    // printf("branch 4\n");
     indent += indent_unit;
     index = 0;
     previous_id_stack.push(previous_id);
@@ -344,7 +344,7 @@ void HtmlDocVisitor::generateRow(std::vector<std::string> &previous_parameter_na
   return;
 }
 
-// Siyuan: private function for process one line
+// Docio: private function for process one line
 void HtmlDocVisitor::processOneline(std::string next_line, std::string line,
 				    std::string ret_line, const char* parameter_name_to_process,
 				    int &indent, int &index,
@@ -360,8 +360,8 @@ void HtmlDocVisitor::processOneline(std::string next_line, std::string line,
   // get parameter name from the line
   std::getline(ss, parameter_full_name, '\t');
   std::getline(retss, ret_parameter_name, '\t');
-  printf("Full name: %s\t", parameter_full_name.c_str());
-  /* printf("line: %s\n", line.c_str());
+  /* printf("Full name: %s\t", parameter_full_name.c_str());
+     printf("line: %s\n", line.c_str());
      printf("ret_line: %s\n", ret_line.c_str()); */
   
   // get parameter value from the line
@@ -443,7 +443,7 @@ void HtmlDocVisitor::processOneline(std::string next_line, std::string line,
       collapsible = 1;
   }
 
-  printf("Collapsible: %d\n", collapsible);
+  // printf("Collapsible: %d\n", collapsible);
   generateRow(previous_parameter_name_list, previous_id_stack, previous_index_stack,
 	      parameter_name_list, indent, index, previous_id,
 	      parameter_name.c_str(), parameter_value.c_str(),
@@ -472,6 +472,102 @@ void HtmlDocVisitor::getParameterId(std::ifstream &parameterIdsFile, std::string
   return;
 }
 
+// Docio: private function to get parameter subnames
+std::vector<std::string> HtmlDocVisitor::getSubNames(std::string parameter_full_name){
+  // split full name into a list names by '.', '*', '->'
+
+  std::vector<std::string> parameter_name_list;
+
+  std::istringstream nss(parameter_full_name);
+  std::istringstream parameter_name_ss;
+  std::string parameter_name;
+  while(std::getline(nss, parameter_name, '*')){
+    
+    parameter_name_ss.str(parameter_name);
+    std::string subname;
+    while(std::getline(parameter_name_ss, subname, '.')){
+
+      size_t pos = 0;
+      while ((pos = subname.find("->")) != std::string::npos) {
+	
+	std::string subname2 = subname.substr(0, pos);
+	trim(subname2);
+	if(subname2.compare("") != 0){
+
+	  parameter_name_list.push_back(subname2);
+	}
+	
+	subname.erase(0, pos + 2);
+      }
+
+      trim(subname);
+      if(subname.compare("") != 0 ){
+	parameter_name_list.push_back(subname);
+      }
+      
+    }
+    parameter_name_ss.clear();
+  }
+
+  return parameter_name_list;
+}
+
+// Docio: private function for process one line
+void HtmlDocVisitor::processOnelineIoexample(std::string next_line, std::string line,
+				    std::string ret_line,
+				    int &indent, int &index,
+				    std::string &previous_id,
+				    std::stack<std::string> &previous_id_stack,
+				    std::stack<int> &previous_index_stack,
+				    std::vector<std::string> &previous_parameter_name_list){
+  std::string parameter_full_name, parameter_value, ret_parameter_name, ret_parameter_value;
+  
+  std::istringstream ss(line);
+  std::istringstream retss(ret_line);
+
+  // get parameter name from the line
+  std::getline(ss, parameter_full_name, '\t');
+  std::getline(retss, ret_parameter_name, '\t');
+  /* printf("Full name: %s\t", parameter_full_name.c_str());
+     printf("line: %s\n", line.c_str());
+     printf("ret_line: %s\n", ret_line.c_str()); */
+  
+  // get parameter value from the line
+  std::getline(ss, parameter_value, '\t');
+  std::getline(retss, ret_parameter_value, '\t');
+
+  // get the subname list
+  std::vector<std::string> parameter_name_list = getSubNames(parameter_full_name);
+  
+  int collapsible = 0;
+  if(!next_line.empty()){
+    // printf("next line is not empty!\n");
+    std::istringstream next_ss(next_line);
+    std::string next_parameter_full_name;
+    std::getline(next_ss, next_parameter_full_name, '\t');
+
+    std::vector<std::string> next_parameter_name_list = getSubNames(next_parameter_full_name);
+    if(next_parameter_name_list.size() == parameter_name_list.size()
+       && next_parameter_full_name.at(0) == '*'){
+      next_parameter_full_name.erase(0, 1);
+      if(next_parameter_full_name.compare(parameter_full_name) == 0){
+	// pass the current parameter, only visualize the next one
+	return;
+      }
+    }
+    else if(next_parameter_name_list.size() > parameter_name_list.size())
+      collapsible = 1;
+  }
+
+  // printf("Collapsible: %d\n", collapsible);
+  generateRow(previous_parameter_name_list, previous_id_stack, previous_index_stack,
+	      parameter_name_list, indent, index, previous_id,
+	      parameter_full_name.c_str(), parameter_value.c_str(),
+	      ret_parameter_value.c_str(), collapsible);
+  
+  previous_parameter_name_list = parameter_name_list;
+}
+
 void HtmlDocVisitor::getFunctionId(std::ifstream &parameterIdsFile, std::string &previous_id,
 				   QCString funcname){
   std::string id_line;
@@ -485,9 +581,10 @@ void HtmlDocVisitor::getFunctionId(std::ifstream &parameterIdsFile, std::string 
     std::getline(idline_ss, parameter_name_inidfile, '\t');
     if(strcmp(functionname.c_str(), funcname) == 0){
       previous_id = functionid + "_";
-      break;
+      return;
     }
   }
+  previous_id = "";
 }
 
 // Docio: added a function for visiting value node
@@ -497,11 +594,11 @@ void HtmlDocVisitor::visit(DocVariableValue *v){
 
   QCString funcname = v->funcname();
   std::ifstream infile("ioexamples/" + funcname + ".parameter.example.i");
-  std::ifstream retinfile("ioexamples/" + funcname + ".parameter.example.o");
+  std::ifstream outfile("ioexamples/" + funcname + ".parameter.example.o");
   std::ifstream parameterIdsFile("parameterids.txt");
 
   if ( infile.peek() == std::ifstream::traits_type::eof()
-       && retinfile.peek() == std::ifstream::traits_type::eof()) {
+       && outfile.peek() == std::ifstream::traits_type::eof()) {
     return;
   }
 
@@ -536,7 +633,7 @@ void HtmlDocVisitor::visit(DocVariableValue *v){
     
   // read file line by line
   while (std::getline(infile, next_line)){
-    std::getline(retinfile, ret_line);
+    std::getline(outfile, ret_line);
     processOneline(next_line, line, ret_line, v->paramname(),
 		   indent, index,
 		   previous_id,
@@ -548,7 +645,7 @@ void HtmlDocVisitor::visit(DocVariableValue *v){
   }//finish read file line by line
 
   // process the last line
-  std::getline(retinfile, ret_line);
+  std::getline(outfile, ret_line);
   next_line.clear();
   processOneline(next_line, line, ret_line, v->paramname(),
 		 indent, index,
@@ -564,14 +661,22 @@ void HtmlDocVisitor::visit(DocIoexample *io){
   if (m_hide) return;
   QCString funcname = io->funcname();
   std::ifstream infile("ioexamples/" + funcname + ".parameter.example.i");
-  std::ifstream retinfile("ioexamples/" + funcname + ".parameter.example.o");
+  std::ifstream outfile("ioexamples/" + funcname + ".parameter.example.o");
+  std::ifstream retfile("ioexamples/" + funcname + ".return.example");
   std::ifstream parameterIdsFile("parameterids.txt");
   if ( infile.peek() == std::ifstream::traits_type::eof()
-       && retinfile.peek() == std::ifstream::traits_type::eof()
-       && parameterIdsFile.peek() == std::ifstream::traits_type::eof()) {
+       || outfile.peek() == std::ifstream::traits_type::eof()
+       || parameterIdsFile.peek() == std::ifstream::traits_type::eof()) {
     return;
   }
   
+  // get the function's id
+  std::string previous_id = to_string(1) + "_";  
+  getFunctionId(parameterIdsFile, previous_id, funcname);
+  if(previous_id.compare("") == 0)
+    return;
+
+  printf("Generating Io example: function %s\n", qPrint(funcname));
   forceEndParagraph(io);
   m_t << "<dl class=\"section ioexample\"><dt>I/O Example</dt><dd>";
 
@@ -579,10 +684,6 @@ void HtmlDocVisitor::visit(DocIoexample *io){
   m_t << "<table class=\"fieldtable\"><tbody>";
   // headline
   m_t << "<tr><th>parameter name</th><th>before function call</th><th>after function call</th></tr>";
-
-  // get the parameter's id
-  std::string previous_id = to_string(1) + "_";  
-  getFunctionId(parameterIdsFile, previous_id, funcname);
 
   std::stack<std::string> previous_id_stack;
   std::stack<int> previous_index_stack;
@@ -595,8 +696,8 @@ void HtmlDocVisitor::visit(DocIoexample *io){
   
   std::getline(infile, line); 
   while (std::getline(infile, next_line)){
-    std::getline(retinfile, ret_line);
-    processOneline(next_line, line, ret_line, NULL,
+    std::getline(outfile, ret_line);
+    processOnelineIoexample(next_line, line, ret_line,
 		   indent, index,
 		   previous_id,
 		   previous_id_stack,
@@ -607,14 +708,17 @@ void HtmlDocVisitor::visit(DocIoexample *io){
   }//finish read file line by line
   
   // process the last line
-  std::getline(retinfile, ret_line);
+  std::getline(outfile, ret_line);
   next_line.clear();
-  processOneline(next_line, line, ret_line, NULL,
+  processOnelineIoexample(next_line, line, ret_line,
 		 indent, index,
 		 previous_id,
 		 previous_id_stack,
 		 previous_index_stack,
 		 previous_parameter_name_list);
+
+  // TODO: add return values in the table
+  // file: retfile
   
   m_t << "</tbody></table></dd></dl>";
   return;
