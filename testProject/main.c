@@ -43,3 +43,19 @@ int main()
   return 0;
 }
 
+/**
+ * Guess the file format.
+ *
+ * @param is_opened Whether the file is already opened; determines whether
+ *                  demuxers with or without AVFMT_NOFILE are probed.
+ * @param score_ret The score of the best detection.
+ */
+AVInputFormat *av_probe_input_format3(AVProbeData *pd, int is_opened, int *score_ret){
+}
+
+/**
+ * Close an opened input AVFormatContext. Free it and all its contents
+ * and set *s to NULL.
+ */
+void avformat_close_input(AVFormatContext **s){
+}
