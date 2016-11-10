@@ -231,17 +231,31 @@ std::string HtmlDocVisitor::generateIndentTableRow(const char * first_column_txt
 	<< current_id_string.c_str() << "')\">&#9658;</span>";
   }
   // first column -- txt
-  m_t << first_column_txt;
+  int is_return = 0;
+  if(strcmp(first_column_txt, "$return_value") == 0){
+    m_t << "return";
+    is_return = 1;
+  }
+  else{
+    m_t << first_column_txt;
+  }
   m_t << "</td>";
 
   // second column
   m_t <<"<td class=\"desc\">";
-  m_t << second_column_txt;
+  if(!is_return){
+    m_t << second_column_txt;
+  }
   m_t <<"</td>";
 
   //third column
   m_t <<"<td class=\"desc\">";
-  m_t << third_column_txt;
+  if(!is_return){
+    m_t << third_column_txt;
+  }
+  else{
+    m_t << second_column_txt;
+  }
   m_t <<"</td>";
 
   //end row
@@ -273,7 +287,7 @@ std::string to_string( const int& n )
   return stm.str() ;
 }
 
-// Siyuan: private function for generating a row for a value based on previous row's name
+// Docio: private function for generating a row for a value based on previous row's name
 void HtmlDocVisitor::generateRow(std::vector<std::string> &previous_parameter_name_list,
 				 std::stack<std::string> &previous_id_stack,
 				 std::stack<int> &previous_index_stack,
@@ -662,7 +676,6 @@ void HtmlDocVisitor::visit(DocIoexample *io){
   QCString funcname = io->funcname();
   std::ifstream infile("ioexamples/" + funcname + ".parameter.example.i");
   std::ifstream outfile("ioexamples/" + funcname + ".parameter.example.o");
-  std::ifstream retfile("ioexamples/" + funcname + ".return.example");
   std::ifstream parameterIdsFile("parameterids.txt");
   if ( infile.peek() == std::ifstream::traits_type::eof()
        || outfile.peek() == std::ifstream::traits_type::eof()
@@ -671,9 +684,9 @@ void HtmlDocVisitor::visit(DocIoexample *io){
   }
   
   // get the function's id
-  std::string previous_id = to_string(1) + "_";  
-  getFunctionId(parameterIdsFile, previous_id, funcname);
-  if(previous_id.compare("") == 0)
+  std::string function_id = "";
+  getFunctionId(parameterIdsFile, function_id, funcname);
+  if(function_id.compare("") == 0)
     return;
 
   printf("Generating Io example: function %s\n", qPrint(funcname));
@@ -685,19 +698,26 @@ void HtmlDocVisitor::visit(DocIoexample *io){
   // headline
   m_t << "<tr><th>parameter name</th><th>before function call</th><th>after function call</th></tr>";
 
-  std::stack<std::string> previous_id_stack;
-  std::stack<int> previous_index_stack;
-  std::vector<std::string> previous_parameter_name_list;
-  std::string line, next_line, ret_line;
-  int indent = 0, index = 0;
+  std::stack<std::string> 	previous_id_stack;
+  std::stack<int> 		previous_index_stack;
+  std::vector<std::string> 	previous_parameter_name_list;
+  std::string line, next_line, out_line;
+  int indent = 0, index = 0, finish = 0;
 
+  std::string previous_id = function_id;
   previous_id_stack.push(previous_id);
   previous_index_stack.push(-1);
   
   std::getline(infile, line); 
-  while (std::getline(infile, next_line)){
-    std::getline(outfile, ret_line);
-    processOnelineIoexample(next_line, line, ret_line,
+  while (!finish){
+    std::istream& i = std::getline(infile, next_line);
+    if(!i){
+      finish = 1;
+      next_line.clear();
+    }
+    
+    std::getline(outfile, out_line);
+    processOnelineIoexample(next_line, line, out_line,
 		   indent, index,
 		   previous_id,
 		   previous_id_stack,
@@ -707,18 +727,31 @@ void HtmlDocVisitor::visit(DocIoexample *io){
     line = next_line; // update the current line
   }//finish read file line by line
   
-  // process the last line
-  std::getline(outfile, ret_line);
-  next_line.clear();
-  processOnelineIoexample(next_line, line, ret_line,
-		 indent, index,
-		 previous_id,
-		 previous_id_stack,
-		 previous_index_stack,
-		 previous_parameter_name_list);
-
-  // TODO: add return values in the table
-  // file: retfile
+  // put return values in the table
+  std::stack<std::string> 	previous_id_stack2;
+  std::stack<int>		previous_index_stack2;
+  std::vector<std::string>	previous_parameter_name_list2;
+  
+  std::ifstream retfile("ioexamples/" + funcname + ".return.example");
+  indent = index = finish = 0;
+  previous_id = function_id;
+  previous_id_stack2.push(previous_id);
+  previous_index_stack2.push(-1);
+  
+  std::getline(retfile, line);
+  while (!finish){
+    std::istream& i = std::getline(retfile, next_line);
+    if(!i){
+      finish = 1;
+      next_line.clear();
+    }
+        
+    processOnelineIoexample(next_line, line, "",
+			    indent, index,
+			    previous_id, previous_id_stack2,
+			    previous_index_stack2, previous_parameter_name_list2);
+    line = next_line;
+  }
   
   m_t << "</tbody></table></dd></dl>";
   return;
