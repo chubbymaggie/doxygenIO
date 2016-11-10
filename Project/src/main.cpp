@@ -18,6 +18,9 @@
 
 #include "doxygen.h"
 #include <stdio.h>
+#include <unistd.h>
+#include <errno.h>
+
 /*! \file
  *  \brief main entry point for doxygen
  *
@@ -31,6 +34,16 @@
 int main(int argc,char **argv)
 {
   remove( "functionNameList.txt" );
+  
+  char cCurrentPath[FILENAME_MAX];
+  if (!getcwd(cCurrentPath, sizeof(cCurrentPath)))
+    {
+      return errno;
+    }
+
+  cCurrentPath[sizeof(cCurrentPath) - 1] = '\0'; /* not really required */
+  printf ("The current working directory is %s", cCurrentPath);
+  
   initDoxygen();
   readConfiguration(argc,argv);
   checkConfiguration();
