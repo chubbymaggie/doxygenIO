@@ -712,7 +712,7 @@ void HtmlDocVisitor::visit(DocIoexample *io){
   std::getline(infile, line); 
   while (!finish){
     std::istream& i = std::getline(infile, next_line);
-    if(!i){
+    if(!i || next_line.compare("") == 0){
       finish = 1;
       next_line.clear();
     }
@@ -742,7 +742,7 @@ void HtmlDocVisitor::visit(DocIoexample *io){
   std::getline(retfile, line);
   while (!finish){
     std::istream& i = std::getline(retfile, next_line);
-    if(!i){
+    if(!i || next_line.compare("") == 0){
       finish = 1;
       next_line.clear();
     }
