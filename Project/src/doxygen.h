@@ -28,6 +28,8 @@
 #include "dirdef.h"
 #include "memberlist.h"
 
+#define SHOW_DEREFD_POINTER 1
+
 class RefList;
 class PageSList;
 class PageSDict;

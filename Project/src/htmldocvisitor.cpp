@@ -564,7 +564,8 @@ void HtmlDocVisitor::processOnelineIoexample(std::string next_line, std::string 
     if(next_parameter_name_list.size() == parameter_name_list.size()
        && next_parameter_full_name.at(0) == '*'){
       next_parameter_full_name.erase(0, 1);
-      if(next_parameter_full_name.compare(parameter_full_name) == 0){
+      if(next_parameter_full_name.compare(parameter_full_name) == 0
+	 && SHOW_DEREFD_POINTER){
 	// pass the current parameter, only visualize the next one
 	return;
       }
