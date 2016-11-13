@@ -466,142 +466,6 @@ void HtmlDocVisitor::processOneline(std::string next_line, std::string line,
   previous_parameter_name_list = parameter_name_list;
 }
 
-void HtmlDocVisitor::getParameterId(std::ifstream &parameterIdsFile, std::string &previous_id,
-				    QCString paramName, QCString funcname){
-  std::string id_line;
-  while(std::getline(parameterIdsFile, id_line)){
-    std::string functionid, parameterid, functionname, parametertype, parameter_name_inidfile;
-    std::istringstream idline_ss(id_line);
-    std::getline(idline_ss, functionid, '\t');
-    std::getline(idline_ss, parameterid, '\t');
-    std::getline(idline_ss, functionname, '\t');
-    std::getline(idline_ss, parametertype, '\t');
-    std::getline(idline_ss, parameter_name_inidfile, '\t');
-    if(strcmp(parameter_name_inidfile.c_str(),  paramName) == 0
-       && strcmp(functionname.c_str(), funcname) == 0){
-      previous_id = functionid + "_" + parameterid + "_";
-      break;
-    }
-  }
-  return;
-}
-
-// Docio: private function to get parameter subnames
-std::vector<std::string> HtmlDocVisitor::getSubNames(std::string parameter_full_name){
-  // split full name into a list names by '.', '*', '->'
-
-  std::vector<std::string> parameter_name_list;
-
-  std::istringstream nss(parameter_full_name);
-  std::istringstream parameter_name_ss;
-  std::string parameter_name;
-  while(std::getline(nss, parameter_name, '*')){
-    
-    parameter_name_ss.str(parameter_name);
-    std::string subname;
-    while(std::getline(parameter_name_ss, subname, '.')){
-
-      size_t pos = 0;
-      while ((pos = subname.find("->")) != std::string::npos) {
-	
-	std::string subname2 = subname.substr(0, pos);
-	trim(subname2);
-	if(subname2.compare("") != 0){
-
-	  parameter_name_list.push_back(subname2);
-	}
-	
-	subname.erase(0, pos + 2);
-      }
-
-      trim(subname);
-      if(subname.compare("") != 0 ){
-	parameter_name_list.push_back(subname);
-      }
-      
-    }
-    parameter_name_ss.clear();
-  }
-
-  return parameter_name_list;
-}
-
-// Docio: private function for process one line
-void HtmlDocVisitor::processOnelineIoexample(std::string next_line, std::string line,
-				    std::string ret_line,
-				    int &indent, int &index,
-				    std::string &previous_id,
-				    std::stack<std::string> &previous_id_stack,
-				    std::stack<int> &previous_index_stack,
-				    std::vector<std::string> &previous_parameter_name_list){
-  std::string parameter_full_name, parameter_value, ret_parameter_name, ret_parameter_value;
-  
-  std::istringstream ss(line);
-  std::istringstream retss(ret_line);
-
-  // get parameter name from the line
-  std::getline(ss, parameter_full_name, '\t');
-  std::getline(retss, ret_parameter_name, '\t');
-  /* printf("Full name: %s\t", parameter_full_name.c_str());
-     printf("line: %s\n", line.c_str());
-     printf("ret_line: %s\n", ret_line.c_str()); */
-  
-  // get parameter value from the line
-  std::getline(ss, parameter_value, '\t');
-  std::getline(retss, ret_parameter_value, '\t');
-
-  // get the subname list
-  std::vector<std::string> parameter_name_list = getSubNames(parameter_full_name);
-  
-  int collapsible = 0;
-  if(!next_line.empty()){
-    // printf("next line is not empty!\n");
-    std::istringstream next_ss(next_line);
-    std::string next_parameter_full_name;
-    std::getline(next_ss, next_parameter_full_name, '\t');
-
-    std::vector<std::string> next_parameter_name_list = getSubNames(next_parameter_full_name);
-    if(next_parameter_name_list.size() == parameter_name_list.size()
-       && next_parameter_full_name.at(0) == '*'){
-      next_parameter_full_name.erase(0, 1);
-      if(next_parameter_full_name.compare(parameter_full_name) == 0
-	 && !SHOW_DEREFD_POINTER){
-	// pass the current parameter, only visualize the next one
-	return;
-      }
-    }
-    else if(next_parameter_name_list.size() > parameter_name_list.size())
-      collapsible = 1;
-  }
-
-  // printf("Collapsible: %d\n", collapsible);
-  generateRow(previous_parameter_name_list, previous_id_stack, previous_index_stack,
-	      parameter_name_list, indent, index, previous_id,
-	      parameter_full_name.c_str(), parameter_value.c_str(),
-	      ret_parameter_value.c_str(), collapsible);
-  
-  previous_parameter_name_list = parameter_name_list;
-}
-
-void HtmlDocVisitor::getFunctionId(std::ifstream &parameterIdsFile, std::string &previous_id,
-				   QCString funcname){
-  std::string id_line;
-  while(std::getline(parameterIdsFile, id_line)){
-    std::string functionid, parameterid, functionname, parametertype, parameter_name_inidfile;
-    std::istringstream idline_ss(id_line);
-    std::getline(idline_ss, functionid, '\t');
-    std::getline(idline_ss, parameterid, '\t');
-    std::getline(idline_ss, functionname, '\t');
-    std::getline(idline_ss, parametertype, '\t');
-    std::getline(idline_ss, parameter_name_inidfile, '\t');
-    if(strcmp(functionname.c_str(), funcname) == 0){
-      previous_id = functionid + "_";
-      return;
-    }
-  }
-  previous_id = "";
-}
-
 // Docio: added a function for visiting value node
 void HtmlDocVisitor::visit(DocVariableValue *v){
   
@@ -672,6 +536,311 @@ void HtmlDocVisitor::visit(DocVariableValue *v){
   m_t << "</tbody></table>";
 }
 
+void HtmlDocVisitor::getParameterId(std::ifstream &parameterIdsFile, std::string &previous_id,
+				    QCString paramName, QCString funcname){
+  std::string id_line;
+  while(std::getline(parameterIdsFile, id_line)){
+    std::string functionid, parameterid, functionname, parametertype, parameter_name_inidfile;
+    std::istringstream idline_ss(id_line);
+    std::getline(idline_ss, functionid, '\t');
+    std::getline(idline_ss, parameterid, '\t');
+    std::getline(idline_ss, functionname, '\t');
+    std::getline(idline_ss, parametertype, '\t');
+    std::getline(idline_ss, parameter_name_inidfile, '\t');
+    if(strcmp(parameter_name_inidfile.c_str(),  paramName) == 0
+       && strcmp(functionname.c_str(), funcname) == 0){
+      previous_id = functionid + "_" + parameterid + "_";
+      break;
+    }
+  }
+  return;
+}
+
+// Docio: private function to get parameter subnames
+std::vector<std::string> HtmlDocVisitor::getSubNames(std::string parameter_full_name){
+  // split full name into a list names by '.', '*', '->'
+
+  std::vector<std::string> parameter_name_list;
+
+  std::istringstream nss(parameter_full_name);
+  std::istringstream parameter_name_ss;
+  std::string parameter_name;
+  while(std::getline(nss, parameter_name, '*')){
+    
+    parameter_name_ss.str(parameter_name);
+    std::string subname;
+    while(std::getline(parameter_name_ss, subname, '.')){
+
+      size_t pos = 0;
+      while ((pos = subname.find("->")) != std::string::npos) {
+	
+	std::string subname2 = subname.substr(0, pos);
+	trim(subname2);
+	if(subname2.compare("") != 0){
+
+	  parameter_name_list.push_back(subname2);
+	}
+	
+	subname.erase(0, pos + 2);
+      }
+
+      trim(subname);
+      if(subname.compare("") != 0 ){
+	parameter_name_list.push_back(subname);
+      }
+      
+    }
+    parameter_name_ss.clear();
+  }
+
+  return parameter_name_list;
+}
+
+void HtmlDocVisitor::getFunctionId(std::ifstream &parameterIdsFile, std::string &previous_id,
+				   QCString funcname){
+  std::string id_line;
+  while(std::getline(parameterIdsFile, id_line)){
+    std::string functionid, parameterid, functionname, parametertype, parameter_name_inidfile;
+    std::istringstream idline_ss(id_line);
+    std::getline(idline_ss, functionid, '\t');
+    std::getline(idline_ss, parameterid, '\t');
+    std::getline(idline_ss, functionname, '\t');
+    std::getline(idline_ss, parametertype, '\t');
+    std::getline(idline_ss, parameter_name_inidfile, '\t');
+    if(strcmp(functionname.c_str(), funcname) == 0){
+      previous_id = functionid + "_";
+      return;
+    }
+  }
+  previous_id = "";
+}
+
+std::string HtmlDocVisitor::getParameterName(std::string line){
+  if(line.compare("") == 0) return "";
+
+  std::size_t found = line.find_first_of('\t');
+  std::string tmp = line.substr(0, found);
+  trim(tmp);
+  return tmp;
+}
+
+std::string HtmlDocVisitor::getParameterValue(std::string line){
+  if(line.compare("") == 0) return "";
+  
+  std::size_t found = line.find_first_of('\t');
+  std::string tmp = line.substr(found+1);
+  trim(tmp);
+  return tmp;
+}
+
+
+int HtmlDocVisitor::is_collapsible(std::vector<std::string> current_list, std::vector<std::string> next_list,
+				   std::string current_name, std::string next_name){
+
+  return next_list.size() > current_list.size();
+}
+
+int HtmlDocVisitor::is_dereference(std::vector<std::string> current_list, std::vector<std::string> next_list,
+				 std::string current_name, std::string next_name){
+  if(next_list.size() != current_list.size())
+    return 0;
+  
+  if(next_name.at(0) != '*')
+    return 0;
+  
+  std::string tmp = next_name.substr(1);
+  return tmp.compare(current_name) == 0 ;
+}
+
+int HtmlDocVisitor::is_skippable(std::vector<std::string> current_list, std::vector<std::string> next_list,
+				 std::string current_name, std::string next_name){
+  // example, current parameter: p, next parameter *p, in this case,
+  // we show only *p
+  if(SHOW_DEREFD_POINTER)
+    return 0;
+  
+  return is_dereference(current_list, next_list, current_name, next_name);
+}
+
+/*!
+ * visualize io values from files
+ */
+void HtmlDocVisitor::visualizeIovalues(std::ifstream &infile, std::ifstream &outfile, std::string function_id){
+  std::stack<std::string> 	previous_id_stack;
+  std::stack<int> 		previous_index_stack;
+  std::vector<std::string> 	previous_parameter_name_list;
+
+  std::string previous_id = function_id;
+  previous_id_stack.push(previous_id);
+  previous_index_stack.push(-1);
+  
+  int indent = 0, index = 0, finish_in = 0, finish_out = 0, prev_in_collapsible = 0, prev_out_collapsible = 0;
+  std::string line, out_line, next_line, next_out_line;
+  
+  int read_in_file = 1, read_out_file = 1;
+  std::getline(infile, line);
+  std::getline(outfile, out_line);
+  std::string in_name = getParameterName(line);
+  std::string out_name = getParameterName(out_line);
+  std::string next_in_name = "", next_out_name = "";
+  
+  while (!finish_in || !finish_out){
+
+    if(!finish_in && read_in_file){
+      std::istream& i = std::getline(infile, next_line);
+      
+      if(!i || next_line.compare("") == 0 ){
+	finish_in = 1;
+	next_line = "";
+      }
+
+      next_in_name = getParameterName(next_line);
+    }
+    
+    if(!finish_out && read_out_file){
+      std::istream& o = std::getline(outfile, next_out_line);
+      
+      if(!o || next_out_line.compare("") == 0){
+	finish_out = 1;
+	next_out_line = "";
+      }
+
+      next_out_name = getParameterName(next_out_line);
+    }
+    
+    std::string parameter_name, in_value, out_value;
+    // 0: uninitialized,
+    // 1: process both lines from in&out files,
+    // 2: process in file, 3: process out file
+    int process_type = 0; 
+
+    if (in_name.compare(out_name) == 0){
+      process_type = 1;
+      read_in_file = read_out_file = 1;
+      
+      // if the two lines have the same parameter name
+      parameter_name = in_name;
+      in_value = getParameterValue(line);
+      out_value = getParameterValue(out_line);
+    }
+    else if(prev_in_collapsible){
+      process_type = 2;
+      
+      read_in_file = 1;
+      read_out_file = 0;
+
+      parameter_name = in_name;
+      in_value = getParameterValue(line);
+    }
+    else if(prev_out_collapsible){
+      process_type = 3;
+      
+      read_in_file = 0;
+      read_out_file = 1;
+
+      parameter_name = out_name;
+      out_value = getParameterValue(out_line);
+    }
+
+    std::vector<std::string> parameter_name_list = getSubNames(parameter_name);
+    std::vector<std::string> next_in_name_list, next_out_name_list;
+    
+    int skip = 0;
+    // check the current row should be skipped or not
+    int tmp1 = 1, tmp2 = 1;
+    if(process_type == 1 || process_type == 2){
+      next_in_name_list = getSubNames(next_in_name);
+      if(finish_in){
+	tmp1 = 0;
+      }
+      else{
+	tmp1 = is_skippable(parameter_name_list, next_in_name_list, parameter_name, next_in_name);
+      }
+    }
+    
+    if(process_type == 1 || process_type == 3){
+      next_out_name_list = getSubNames(next_out_name);
+      if(finish_out){
+	tmp2 = 0;
+      }
+      else{
+	tmp2 = is_skippable(parameter_name_list, next_out_name_list, parameter_name, next_out_name);
+      }
+    }
+    skip = tmp1 && tmp2;
+
+    // check if the current row should be collapsed (table row)
+    int in_collapsible = 0, out_collapsible = 0;
+    int collapsible = 0;
+    if(!skip){
+      
+      if(process_type == 1 || process_type == 2){
+	if(finish_in){
+	  in_collapsible = 0;
+	}
+	else{
+	  in_collapsible = is_collapsible(parameter_name_list, next_in_name_list, parameter_name, next_in_name);
+	}
+      }
+      if(process_type == 1 || process_type == 3){
+	if(finish_out){
+	  out_collapsible = 0;
+	}
+	else{
+	  out_collapsible = is_collapsible(parameter_name_list, next_out_name_list, parameter_name, next_out_name);
+	}
+      }
+
+      if(process_type == 1){
+	collapsible = in_collapsible || out_collapsible;
+      }
+      else if(process_type == 2){
+	collapsible = in_collapsible;
+      }
+      else if(process_type == 3){
+	collapsible = out_collapsible;
+      }
+      
+    }
+    
+
+    if (!skip && process_type == 1){
+      generateRow(previous_parameter_name_list, previous_id_stack, previous_index_stack,
+		  parameter_name_list, indent, index, previous_id,
+		  parameter_name.c_str(), in_value.c_str(), out_value.c_str(), collapsible);
+    }
+    else if(!skip && process_type == 2){
+      generateRow(previous_parameter_name_list, previous_id_stack, previous_index_stack,
+		  parameter_name_list, indent, index, previous_id,
+		  parameter_name.c_str(), in_value.c_str(), "", collapsible);
+    }
+    else if(!skip && process_type == 3){
+      generateRow(previous_parameter_name_list, previous_id_stack, previous_index_stack,
+		  parameter_name_list, indent, index, previous_id,
+		  parameter_name.c_str(), "", out_value.c_str(), collapsible);
+    }	
+
+
+    // update the current line, the names
+    if(!finish_in && read_in_file){
+      line = next_line;
+      in_name = next_in_name;
+      prev_in_collapsible = is_dereference(parameter_name_list, next_in_name_list, parameter_name, next_in_name)
+	|| in_collapsible;
+    }
+    
+    if(!finish_out && read_out_file){
+      out_line = next_out_line;
+      out_name = next_out_name;
+      prev_out_collapsible = is_dereference(parameter_name_list, next_out_name_list, parameter_name, next_out_name)
+	|| out_collapsible;
+    }
+    
+    previous_parameter_name_list = parameter_name_list;
+    
+  }//finish read file line by line
+}
+
 void HtmlDocVisitor::visit(DocIoexample *io){
   if (m_hide) return;
   QCString funcname = io->funcname();
@@ -699,61 +868,12 @@ void HtmlDocVisitor::visit(DocIoexample *io){
   // headline
   m_t << "<tr><th>parameter name</th><th>before function call</th><th>after function call</th></tr>";
 
-  std::stack<std::string> 	previous_id_stack;
-  std::stack<int> 		previous_index_stack;
-  std::vector<std::string> 	previous_parameter_name_list;
-  std::string line, next_line, out_line;
-  int indent = 0, index = 0, finish = 0;
-
-  std::string previous_id = function_id;
-  previous_id_stack.push(previous_id);
-  previous_index_stack.push(-1);
-  
-  std::getline(infile, line); 
-  while (!finish){
-    std::istream& i = std::getline(infile, next_line);
-    if(!i || next_line.compare("") == 0){
-      finish = 1;
-      next_line.clear();
-    }
-    
-    std::getline(outfile, out_line);
-    processOnelineIoexample(next_line, line, out_line,
-		   indent, index,
-		   previous_id,
-		   previous_id_stack,
-		   previous_index_stack,
-		   previous_parameter_name_list);
-
-    line = next_line; // update the current line
-  }//finish read file line by line
-  
-  // put return values in the table
-  std::stack<std::string> 	previous_id_stack2;
-  std::stack<int>		previous_index_stack2;
-  std::vector<std::string>	previous_parameter_name_list2;
-  
+  visualizeIovalues(infile, outfile, function_id);
   std::ifstream retfile("ioexamples/" + funcname + ".return.example");
-  indent = index = finish = 0;
-  previous_id = function_id;
-  previous_id_stack2.push(previous_id);
-  previous_index_stack2.push(-1);
+  // at here, we won't read infile any more. because it should be read in the previous line
+  visualizeIovalues(infile, retfile, function_id); 
   
-  std::getline(retfile, line);
-  while (!finish){
-    std::istream& i = std::getline(retfile, next_line);
-    if(!i || next_line.compare("") == 0){
-      finish = 1;
-      next_line.clear();
-    }
-        
-    processOnelineIoexample(next_line, line, "",
-			    indent, index,
-			    previous_id, previous_id_stack2,
-			    previous_index_stack2, previous_parameter_name_list2);
-    line = next_line;
-  }
-  
+  // wrap up the table and the section
   m_t << "</tbody></table></dd></dl>";
   return;
 }

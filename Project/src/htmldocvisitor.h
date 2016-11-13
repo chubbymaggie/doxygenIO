@@ -184,18 +184,22 @@ class HtmlDocVisitor : public DocVisitor
 			std::stack<std::string> &previous_id_stack,
 			std::stack<int> &previous_index_stack,
 			std::vector<std::string> &previous_parameter_name_list);
-    void processOnelineIoexample(std::string next_line, std::string line,
-				 std::string ret_line,
-				 int &indent, int &index,
-				 std::string &previous_id,
-				 std::stack<std::string> &previous_id_stack,
-				 std::stack<int> &previous_index_stack,
-				 std::vector<std::string> &previous_parameter_name_list);
+    void visualizeIovalues(std::ifstream &infile, std::ifstream &outfile, std::string function_id);
+    void visualizeRetvalues(std::ifstream &retfile, std::string function_id);
     void getParameterId(std::ifstream &parameterIdsFile, std::string &previous_id,
 			 QCString paramName, QCString funcname);
-    void getFunctionId(std::ifstream &parameterIdsFile, std::string &previous_id,
-			QCString funcname);
+    std::string getParameterName(std::string);
+    std::string getParameterValue(std::string);
+    void getFunctionId(std::ifstream &parameterIdsFile, std::string &previous_id, QCString funcname);
     std::vector<std::string> getSubNames(std::string parameter_full_name);
+    int is_collapsible(std::vector<std::string> current_list, std::vector<std::string> next_list,
+		       std::string current_name, std::string next_name);
+    int is_skippable(std::vector<std::string> current_list, std::vector<std::string> next_list,
+		     std::string current_name, std::string next_name);
+    int is_dereference(std::vector<std::string> current_list, std::vector<std::string> next_list,
+		       std::string current_name, std::string next_name);
+
+    
     //--------------------------------------
     // state variables
     //--------------------------------------
