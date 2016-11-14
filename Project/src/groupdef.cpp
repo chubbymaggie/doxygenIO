@@ -313,23 +313,44 @@ bool GroupDef::insertMember(MemberDef *md,bool docOnly)
   }
   else
   {
-    if(md->memberType()==MemberType_Function && !md->isInline()){
-      char cCurrentPath[FILENAME_MAX];
-      GetCurrentDir(cCurrentPath, sizeof(cCurrentPath));
-      cCurrentPath[sizeof(cCurrentPath) - 1] = '\0';
-      std::string currentdir(cCurrentPath);
-      
-      //Siyuan
-      ofstream functionNameListFile;
-      functionNameListFile.open ("functionNameList.txt",ios::out | ios::app);
-      functionNameListFile << md->name().data() << "\n";
-      functionNameListFile.close();
-    }
     mni = new MemberNameInfo(md->name());
     mni->append(new MemberInfo(md,md->protection(),md->virtualness(),FALSE));
     allMemberNameInfoSDict->append(mni->memberName(),mni);
   }
   //printf("Added member!\n");
+
+  if(md->memberType()==MemberType_Function && !md->isInline()){
+      char cCurrentPath[FILENAME_MAX];
+      GetCurrentDir(cCurrentPath, sizeof(cCurrentPath));
+      cCurrentPath[sizeof(cCurrentPath) - 1] = '\0';
+      std::string currentdir(cCurrentPath);
+
+      const char *currentFunctionName = md->name().data();
+      
+      // write functionnamelist
+      const char *functionNameListFilename = "functionNameList.txt";
+      
+      std::ifstream infile(functionNameListFilename);
+      int inTheFile = 0;
+      std::string line;
+      while (std::getline(infile, line)){
+	if( line.compare(currentFunctionName) == 0 ){
+	  inTheFile = 1;
+	  break;
+	}  
+      }
+      infile.close();
+
+      if(!inTheFile){
+	std::ofstream functionNameListFile;
+	functionNameListFile.open(functionNameListFilename, std::ios::app);
+	functionNameListFile << currentFunctionName << "\n";
+	functionNameListFile.close();
+      }
+      //
+  }
+
+  
   allMemberList->append(md); 
   switch(md->memberType())
   {

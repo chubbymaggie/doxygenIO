@@ -198,6 +198,7 @@ class HtmlDocVisitor : public DocVisitor
 		     std::string current_name, std::string next_name);
     int is_dereference(std::vector<std::string> current_list, std::vector<std::string> next_list,
 		       std::string current_name, std::string next_name);
+    int count_lines(const char * file);
 
     
     //--------------------------------------

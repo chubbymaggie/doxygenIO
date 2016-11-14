@@ -231,10 +231,8 @@ std::string HtmlDocVisitor::generateIndentTableRow(const char * first_column_txt
 	<< current_id_string.c_str() << "')\">&#9658;</span>";
   }
   // first column -- txt
-  int is_return = 0;
   if(strcmp(first_column_txt, "$return_value") == 0){
     m_t << "return";
-    is_return = 1;
   }
   else{
     m_t << first_column_txt;
@@ -243,19 +241,12 @@ std::string HtmlDocVisitor::generateIndentTableRow(const char * first_column_txt
 
   // second column
   m_t <<"<td class=\"desc\">";
-  if(!is_return){
-    m_t << second_column_txt;
-  }
+  m_t << second_column_txt;
   m_t <<"</td>";
 
   //third column
   m_t <<"<td class=\"desc\">";
-  if(!is_return){
-    m_t << third_column_txt;
-  }
-  else{
-    m_t << second_column_txt;
-  }
+  m_t << third_column_txt;
   m_t <<"</td>";
 
   //end row
@@ -678,33 +669,49 @@ void HtmlDocVisitor::visualizeIovalues(std::ifstream &infile, std::ifstream &out
   std::string line, out_line, next_line, next_out_line;
   
   int read_in_file = 1, read_out_file = 1;
-  std::getline(infile, line);
-  std::getline(outfile, out_line);
+  if(!std::getline(infile, line) || line.compare("") == 0){
+    finish_in = 1;
+    line = "";
+  }
+  
+  if(!std::getline(outfile, out_line) || out_line.compare("") == 0){
+    finish_out = 1;
+    out_line = "";
+  }
+  
   std::string in_name = getParameterName(line);
   std::string out_name = getParameterName(out_line);
   std::string next_in_name = "", next_out_name = "";
-  
+
+  int inline_cnt = 0, outline_cnt = 0;
   while (!finish_in || !finish_out){
 
+    int prev_finish_in = finish_in;
+    int prev_finish_out = finish_out;
+    
     if(!finish_in && read_in_file){
-      std::istream& i = std::getline(infile, next_line);
+      std::istream &i = std::getline(infile, next_line);
       
       if(!i || next_line.compare("") == 0 ){
 	finish_in = 1;
 	next_line = "";
       }
 
+      fprintf(stderr, "i:%d ", inline_cnt);
+      inline_cnt ++;
       next_in_name = getParameterName(next_line);
     }
     
     if(!finish_out && read_out_file){
-      std::istream& o = std::getline(outfile, next_out_line);
+      std::istream &o = std::getline(outfile, next_out_line);
       
       if(!o || next_out_line.compare("") == 0){
 	finish_out = 1;
 	next_out_line = "";
       }
 
+      fprintf(stderr, "o:%d ", outline_cnt);
+      outline_cnt ++;
       next_out_name = getParameterName(next_out_line);
     }
     
@@ -714,7 +721,24 @@ void HtmlDocVisitor::visualizeIovalues(std::ifstream &infile, std::ifstream &out
     // 2: process in file, 3: process out file
     int process_type = 0; 
 
-    if (in_name.compare(out_name) == 0){
+    if(prev_finish_in){
+      process_type = 3;
+      read_in_file = 0;
+      read_out_file = 1;
+
+      parameter_name = out_name;
+      out_value = getParameterValue(out_line);
+    }
+    else if(prev_finish_out){
+      process_type = 2;
+      
+      read_in_file = 1;
+      read_out_file = 0;
+
+      parameter_name = in_name;
+      in_value = getParameterValue(line);
+    }
+    else if(in_name.compare(out_name) == 0){
       process_type = 1;
       read_in_file = read_out_file = 1;
       
@@ -841,17 +865,52 @@ void HtmlDocVisitor::visualizeIovalues(std::ifstream &infile, std::ifstream &out
   }//finish read file line by line
 }
 
+int HtmlDocVisitor::count_lines(const char * file){
+  std::ifstream f(file);
+  std::string line;
+  int i;
+  for (i = 0; std::getline(f, line); ++i)
+    ;
+  f.close();
+  
+  fprintf(stderr, "%s: %d\n", file, i);
+  return i;
+}
+
 void HtmlDocVisitor::visit(DocIoexample *io){
   if (m_hide) return;
   QCString funcname = io->funcname();
-  std::ifstream infile("ioexamples/" + funcname + ".parameter.example.i");
-  std::ifstream outfile("ioexamples/" + funcname + ".parameter.example.o");
+  std::string funcname_str = qPrint(funcname);
+  std::string infile_name = "ioexamples/";
+  infile_name.append(funcname_str);
+  infile_name.append(".parameter.example.i");
+  std::string outfile_name = "ioexamples/";
+  outfile_name.append(funcname_str);
+  outfile_name.append(".parameter.example.o");
+  
+  int lineNumber_infile  = count_lines(infile_name.c_str());
+  int lineNumber_outfile = count_lines(outfile_name.c_str());
+
+  std::ifstream infile(infile_name.c_str());
+  std::ifstream outfile(outfile_name.c_str());
   std::ifstream parameterIdsFile("parameterids.txt");
   if ( infile.peek() == std::ifstream::traits_type::eof()
        || outfile.peek() == std::ifstream::traits_type::eof()
        || parameterIdsFile.peek() == std::ifstream::traits_type::eof()) {
     return;
   }
+
+  if(lineNumber_infile > 200 || lineNumber_outfile > 200 ||
+     (lineNumber_infile == 0 && lineNumber_outfile == 0) ){
+    std::ofstream outfile;
+    outfile.open("functions-over200.txt", std::ios_base::app);
+    outfile << qPrint(funcname) << "\n";
+    return;
+  }
+  
+  std::ofstream logfile;
+  logfile.open("functions-doc.txt", std::ios_base::app);
+  logfile << qPrint(funcname) << "\n";
   
   // get the function's id
   std::string function_id = "";
@@ -859,7 +918,7 @@ void HtmlDocVisitor::visit(DocIoexample *io){
   if(function_id.compare("") == 0)
     return;
 
-  printf("Generating Io example: function %s\n", qPrint(funcname));
+  fprintf(stderr, "Generating Io example: function %s\n", qPrint(funcname));
   forceEndParagraph(io);
   m_t << "<dl class=\"section ioexample\"><dt>I/O Example</dt><dd>";
 

@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <qglobal.h>
 #include <qregexp.h>
+#include <fstream>
 #include <assert.h>
 #include "md5.h"
 #include "memberdef.h"
@@ -2882,7 +2883,7 @@ void MemberDef::writeDocumentation(MemberList *ml,OutputList &ol,
                      -1,-1,TRUE,this,FALSE,this);
     ol.endCodeFragment();
   }
-
+  
   QCString brief           = briefDescription();
   QCString detailed        = documentation();
   ArgumentList *docArgList = m_impl->defArgList;
@@ -2967,17 +2968,20 @@ void MemberDef::writeDocumentation(MemberList *ml,OutputList &ol,
         );
   }
 
-  // generate the i/o example document
-  QCString ioDocs;
-  ioDocs += "@ioexample"; // add the command in ioDocs
-  ol.generateDoc(
-	 docFile(), docLine(),
-	 getOuterScope()?getOuterScope():container,
-	 this, // memberDef
-	 ioDocs, // ioFileName
-	 TRUE, // indexWords
-	 FALSE // isExample
-	 );
+  MemberType memberType = this->memberType();
+  if(memberType == MemberType_Function){    
+    // generate the i/o example document
+    QCString ioDocs;
+    ioDocs += "@ioexample"; // add the command in ioDocs
+    ol.generateDoc(
+		   docFile(), docLine(),
+		   getOuterScope()?getOuterScope():container,
+		   this, // memberDef
+		   ioDocs, // ioFileName
+		   TRUE, // indexWords
+		   FALSE // isExample
+		   );
+  }
 
 
   _writeEnumValues(ol,container,cfname,ciname,cname);

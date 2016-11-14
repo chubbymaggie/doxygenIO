@@ -34,6 +34,8 @@
 int main(int argc,char **argv)
 {
   remove( "functionNameList.txt" );
+  remove( "functions-doc.txt" );
+  remove( "functions-over200.txt" );
   
   char cCurrentPath[FILENAME_MAX];
   if (!getcwd(cCurrentPath, sizeof(cCurrentPath)))
@@ -42,7 +44,7 @@ int main(int argc,char **argv)
     }
 
   cCurrentPath[sizeof(cCurrentPath) - 1] = '\0'; /* not really required */
-  printf ("The current working directory is %s", cCurrentPath);
+  printf ("The current working directory is %s\n", cCurrentPath);
   
   initDoxygen();
   readConfiguration(argc,argv);
