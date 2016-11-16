@@ -1,15 +1,26 @@
-This folder contain a copy of modified Doxygen.
+# IO Present: a modified version of Doxygen
 
-Inside folder Project:
+## Inside folder *Project*:
+
 a modified copy of doxygen from https://github.com/doxygen/doxygen.git
+
 version: 1.8.12
 
-To build the project local (working os: Debian 8, jessie):
+## To build the project local (tested in: Debian 8, jessie):
+
+  in the directory of *Project*
+  
   apt-get build-dep doxygen
+  
   delete CMakeCache.txt if it exists
+  
   mkdir build if it does not
+  
   inside the build folder: cmake -G "Unix Makefiles" ..
+  
   inside the build folder: make
+  
   get the runnable file: bin/doxygen
+  
   sudo make install
 

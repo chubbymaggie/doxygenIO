@@ -1,3 +1,5 @@
+Obsolete
+
 docparser.h
 -- line 187-189: Moved m_children from protected to public.
 -- line 207-218: added a class: class DocSvg
