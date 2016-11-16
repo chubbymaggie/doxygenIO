@@ -14,7 +14,7 @@ version: 1.8.12
   
   delete CMakeCache.txt if it exists
   
-  mkdir build if it does not
+  mkdir build if it does not exist
   
   inside the build folder: cmake -G "Unix Makefiles" ..
   
